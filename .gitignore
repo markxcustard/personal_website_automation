@@ -1,0 +1,23 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Python cache files and directories
+__pycache__/
+*.py[cod]
+
+# Ignore environment files
+.env
+.venv
+env/
+venv/
+
+# Ignore pytest cache
+.pytest_cache/
+
+# Ignore VSCode settings
+.vscode/
+
+# Ignore Python cache files and directories
+__pycache__/
+*.py[cod]
+
