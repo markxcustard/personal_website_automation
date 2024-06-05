@@ -1,3 +1,5 @@
+import os
+import glob
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -83,6 +85,102 @@ class HomePage:
             return True
         except TimeoutException as e:
             print(f"TimeoutException: Could not verify portfolio item expanded: {item_id} due to: {e}")
+            return False
+
+    def verify_about_me_text(self, expected_text):
+        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
+        actual_text = about_me_section.text.strip()
+
+        # Normalize whitespace
+        actual_text = ' '.join(actual_text.split())
+        expected_text = ' '.join(expected_text.split())
+
+        if expected_text in actual_text:
+            print(f"Expected text found in About Me section")
+            return True
+        else:
+            print(f"Expected text not found in About Me section")
+            return False
+
+    def verify_github_link(self, expected_url):
+        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
+        github_link = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'github.com/markxcustard/personal_website_automation')]")
+        actual_url = github_link.get_attribute('href')
+
+        if actual_url == expected_url:
+            print(f"GitHub link URL is correct: {actual_url}")
+            return True
+        else:
+            print(f"GitHub link URL is incorrect: {actual_url}")
+            return False
+
+    def verify_resume_download(self, expected_file_name):
+        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
+        download_button = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'img/resume_mark_custard.pdf')]")
+        download_button.click()
+        
+        # Wait for the file to be downloaded
+        time.sleep(5)  # Adjust time if necessary for file download
+        
+        # Check for the presence of any file that starts with the expected file name in the default download directory
+        download_dir = os.path.expanduser('~/Downloads')  # Default download directory for many systems
+        downloaded_files = glob.glob(os.path.join(download_dir, f"{expected_file_name}*"))
+        if downloaded_files:
+            print(f"Resume downloaded successfully to: {downloaded_files[0]}")
+            return True
+        else:
+            print(f"Failed to download resume to: {download_dir}")
+            return False
+
+    def verify_contact_email(self, expected_email):
+        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
+        email_link = contact_section.find_element(By.XPATH, ".//a[contains(@href, 'mailto:')]")
+        actual_email = email_link.get_attribute('href').replace('mailto:', '')
+
+        if actual_email == expected_email:
+            print(f"Email link is correct: {actual_email}")
+            return True
+        else:
+            print(f"Email link is incorrect: {actual_email}")
+            return False
+
+    def verify_contact_phone(self, expected_phone):
+        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
+        phone_element = contact_section.find_element(By.XPATH, ".//p[contains(., 'Phone:')]")
+        actual_phone = phone_element.text.split('Phone:')[1].strip()
+
+        if actual_phone == expected_phone:
+            print(f"Phone number is correct: {actual_phone}")
+            return True
+        else:
+            print(f"Phone number is incorrect: {actual_phone}")
+            return False
+
+    def verify_social_button(self, platform, expected_url):
+        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
+        button = contact_section.find_element(By.XPATH, f".//a[contains(@href, '{platform}')]")
+        actual_url = button.get_attribute('href')
+
+        if actual_url == expected_url:
+            print(f"{platform.capitalize()} button URL is correct: {actual_url}")
+            return True
+        else:
+            print(f"{platform.capitalize()} button URL is incorrect: {actual_url}")
+            return False
+
+    def verify_testimonial_text(self, expected_text):
+        testimonials_section = self.wait_for_element_to_be_visible(self.sections['testimonials'])
+        actual_text = testimonials_section.text.strip()
+
+        # Normalize whitespace
+        actual_text = ' '.join(actual_text.split())
+        expected_text = ' '.join(expected_text.split())
+
+        if expected_text in actual_text:
+            print(f"Expected text found in Testimonials section")
+            return True
+        else:
+            print(f"Expected text not found in Testimonials section")
             return False
 
     def wait_for_element_to_be_clickable(self, locator, timeout=30):

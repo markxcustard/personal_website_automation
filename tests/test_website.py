@@ -1,6 +1,7 @@
 from page_objects.home_page import HomePage
 import pytest
 import time
+import os
 
 @pytest.mark.usefixtures("driver")
 class TestNavigation:
@@ -15,6 +16,47 @@ class TestNavigation:
         time.sleep(2)  # Wait for navigation to complete
 
         assert home_page.verify_section(section)
+
+
+@pytest.mark.usefixtures("driver")
+class TestAboutMe:
+
+    def test_about_me_paragraph(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("about")
+        time.sleep(2)  # Wait for navigation to complete
+
+        expected_paragraph = ("Furthermore, I have implemented post-deployment strategies, "
+                              "such as smoke and regression testing, and spot-checking, to ensure "
+                              "that the core functionalities remain intact after updates and deliverables "
+                              "meet the predefined quality standards.")
+        
+        assert home_page.verify_about_me_text(expected_paragraph)
+
+    def test_github_link(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("about")
+        time.sleep(2)  # Wait for navigation to complete
+
+        expected_github_url = "https://github.com/markxcustard/personal_website_automation"
+        
+        assert home_page.verify_github_link(expected_github_url)
+
+    def test_resume_download(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("about")
+        time.sleep(2)  # Wait for navigation to complete
+
+        expected_file_name = "resume_mark_custard.pdf"
+        
+        assert home_page.verify_resume_download(expected_file_name)
+
+
+@pytest.mark.usefixtures("driver")
+class TestPortfolio:
 
     def test_portfolio_expansion(self, driver):
         home_page = HomePage(driver)
@@ -37,3 +79,33 @@ class TestNavigation:
             if not is_expanded:
                 print(f"Verification failed for item {item_text} with ID {item_id}")
             assert is_expanded
+
+
+@pytest.mark.usefixtures("driver")
+class TestTestimonials:
+
+    def test_testimonial_paragraph(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("testimonials")
+        time.sleep(2)  # Wait for navigation to complete
+
+        expected_testimonial = ('"I only needed a day to know how valuable Mark is on a QA team. '
+                                'His experience, dedication and commitment are truly out of the ordinary. '
+                                'He will get the job done, no questions asked."')
+        
+        assert home_page.verify_testimonial_text(expected_testimonial)
+
+@pytest.mark.usefixtures("driver")
+class TestContact:
+
+    def test_contact_details(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("contact")
+        time.sleep(2)  # Wait for navigation to complete
+
+        assert home_page.verify_contact_email("mark.a.custard@gmail.com")
+        assert home_page.verify_contact_phone("(360) 771-0564")
+        assert home_page.verify_social_button("github.com", "https://github.com/markxcustard")
+        assert home_page.verify_social_button("linkedin.com", "https://www.linkedin.com/in/mark-custard/")
