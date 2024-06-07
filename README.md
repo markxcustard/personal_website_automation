@@ -1,19 +1,19 @@
-# Mark Custard's Portfolio Website
+# Portfolio Website Automated Tests
 
-Welcome to the repository for Mark Custard's Portfolio Website. This repository contains the code for my personal portfolio website and the associated test cases.
+This repository contains the automated tests for Mark Custard's portfolio website. These tests ensure that the website's functionality works as expected.
 
 ## Table of Contents
 
 - [Description](#description)
 - [Installation](#installation)
-- [Usage](#usage)
 - [Running Tests](#running-tests)
+- [Test Structure](#test-structure)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Description
 
-This repository hosts the source code for my personal portfolio website, which showcases my professional experience, skills, and projects. It is built using HTML, CSS, and JavaScript, and includes automated tests using Selenium and Pytest.
+This project includes automated tests for the portfolio website. The tests are written using Selenium and Pytest and cover various sections of the website, such as "About Me," "Contact," "Portfolio," and "Testimonials."
 
 ## Installation
 
@@ -22,8 +22,8 @@ To set up the project locally, follow these steps:
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/markxcustard/portfolio-website.git
-    cd portfolio-website
+    git clone https://github.com/markxcustard/portfolio-website-tests.git
+    cd portfolio-website-tests
     ```
 
 2. **Set up a virtual environment:**
@@ -39,40 +39,70 @@ To set up the project locally, follow these steps:
     pip install -r requirements.txt
     ```
 
-## Usage
+## Running Tests
 
-To serve the website locally, you can use any static file server. Here is an example using Python's built-in HTTP server:
+### Setup for Running Tests
 
-```bash
-python -m http.server
-Open your web browser and navigate to http://localhost:8000 to view the website.
+1. **Install browser drivers:**
 
-Running Tests
-The project includes automated tests to ensure that the website's functionality works as expected. These tests are written using Selenium and Pytest.
+    Make sure you have the appropriate browser drivers installed (e.g., ChromeDriver for Google Chrome, GeckoDriver for Firefox).
 
-Setup for Running Tests
-Install browser drivers:
+2. **Run the tests:**
 
-Make sure you have the appropriate browser drivers installed (e.g., ChromeDriver for Google Chrome, GeckoDriver for Firefox).
+    You can run all tests using the following command:
 
-Run the tests:
+    ```bash
+    pytest tests/
+    ```
 
-You can run all tests using the following command:
+    To run a specific test class or method, use:
 
-bash
-Copy code
-pytest tests/
-To run a specific test class or method, use:
+    ```bash
+    pytest tests/test_website.py::TestAboutMe
+    pytest tests/test_website.py::TestAboutMe::test_about_me_paragraph
+    ```
 
-bash
-Copy code
-pytest tests/test_website.py::TestAboutMe
-pytest tests/test_website.py::TestAboutMe::test_about_me_paragraph
-Test Structure
+## Test Structure
+
 The tests are organized into different classes based on the sections of the website:
 
-TestNavigation: Tests for navigating between different sections of the website.
-TestAboutMe: Tests for the "About Me" section, including verbiage, GitHub link, and resume download.
-TestContact: Tests for the "Contact" section, including email, phone number, GitHub, and LinkedIn buttons.
-TestPortfolio: Tests for the "Portfolio" section, including expanding portfolio items and verifying their content.
-TestTestimonials: Tests for the "Testimonials" section, including verifying testimonial text.
+- `TestNavigation`: Tests for navigating between different sections of the website.
+- `TestAboutMe`: Tests for the "About Me" section, including verbiage, GitHub link, and resume download.
+- `TestContact`: Tests for the "Contact" section, including email, phone number, GitHub, and LinkedIn buttons.
+- `TestPortfolio`: Tests for the "Portfolio" section, including expanding portfolio items and verifying their content.
+- `TestTestimonials`: Tests for the "Testimonials" section, including verifying testimonial text.
+
+### Example Tests
+
+#### `TestAboutMe`
+
+- **test_about_me_paragraph:** Verifies specific text in the "About Me" section.
+- **test_github_link:** Checks that the GitHub link redirects to the correct URL.
+- **test_resume_download:** Ensures that the resume can be downloaded.
+
+#### `TestContact`
+
+- **test_contact_details:** Verifies the email, phone number, GitHub, and LinkedIn buttons in the "Contact" section.
+
+#### `TestPortfolio`
+
+- **test_portfolio_expansion:** Tests expanding portfolio items and verifying their content.
+
+#### `TestTestimonials`
+
+- **test_testimonial_paragraph:** Verifies specific text in the "Testimonials" section.
+
+## Contributing
+
+Contributions are welcome! If you would like to contribute to this project, please follow these steps:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/your-feature`)
+3. Make your changes
+4. Commit your changes (`git commit -m 'Add some feature'`)
+5. Push to the branch (`git push origin feature/your-feature`)
+6. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
