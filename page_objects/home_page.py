@@ -13,12 +13,14 @@ class HomePage:
         self.links = {
             "about": (By.XPATH, "//a[text()='About']"),
             "portfolio": (By.XPATH, "//a[text()='Portfolio']"),
+            "projects": (By.XPATH, "//a[text()='Projects']"),
             "testimonials": (By.XPATH, "//a[text()='Testimonials']"),
             "contact": (By.XPATH, "//a[text()='Contact']")
         }
         self.sections = {
             "about": (By.ID, "about"),
             "portfolio": (By.ID, "portfolio"),
+            "projects": (By.ID, "projects"),
             "testimonials": (By.ID, "testimonials"),
             "contact": (By.ID, "contact")
         }
@@ -102,8 +104,8 @@ class HomePage:
             print(f"Expected text not found in About Me section")
             return False
 
-    def verify_github_link(self, expected_url):
-        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
+    def verify_personal_website_automation_link(self, expected_url):
+        about_me_section = self.wait_for_element_to_be_visible(self.sections['projects'])
         github_link = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'github.com/markxcustard/personal_website_automation')]")
         actual_url = github_link.get_attribute('href')
 
@@ -113,7 +115,19 @@ class HomePage:
         else:
             print(f"GitHub link URL is incorrect: {actual_url}")
             return False
+        
+    def verify_pandas_filtering_films_link(self, expected_url):
+            about_me_section = self.wait_for_element_to_be_visible(self.sections['projects'])
+            github_link = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'github.com/markxcustard/pandas_filtering_films')]")
+            actual_url = github_link.get_attribute('href')
 
+            if actual_url == expected_url:
+                print(f"GitHub link URL is correct: {actual_url}")
+                return True
+            else:
+                print(f"GitHub link URL is incorrect: {actual_url}")
+                return False
+            
     def verify_resume_download(self, expected_file_name):
         about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
         download_button = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'img/resume_mark_custard.pdf')]")

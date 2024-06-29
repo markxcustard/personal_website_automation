@@ -6,7 +6,7 @@ import os
 @pytest.mark.usefixtures("driver")
 class TestNavigation:
 
-    @pytest.mark.parametrize("section", ["about", "portfolio", "testimonials", "contact"])
+    @pytest.mark.parametrize("section", ["about", "portfolio", "projects", "testimonials", "contact"])
     def test_navigation(self, driver, section):
         home_page = HomePage(driver)
         home_page.open()
@@ -27,22 +27,27 @@ class TestAboutMe:
         home_page.go_to_section("about")
         time.sleep(2)  # Wait for navigation to complete
 
-        expected_paragraph = ("Furthermore, I have implemented post-deployment strategies, "
-                              "such as smoke and regression testing, and spot-checking, to ensure "
-                              "that the core functionalities remain intact after updates and deliverables "
-                              "meet the predefined quality standards.")
+        expected_paragraph = ("Furthermore, I have implemented post-deployment strategies, including smoke and regression testing, and spot-checking, to ensure that core functionalities remain intact after updates and that deliverables meet predefined quality standards.")
         
         assert home_page.verify_about_me_text(expected_paragraph)
 
-    def test_github_link(self, driver):
+    def test_personal_website_automation_link(self, driver):
         home_page = HomePage(driver)
         home_page.open()
-        home_page.go_to_section("about")
+        home_page.go_to_section("projects")
         time.sleep(2)  # Wait for navigation to complete
 
         expected_github_url = "https://github.com/markxcustard/personal_website_automation"
+
+    def test_pandas_filtering_films_link(self, driver):
+        home_page = HomePage(driver)
+        home_page.open()
+        home_page.go_to_section("projects")
+        time.sleep(2)  # Wait for navigation to complete
+
+        expected_github_url = "https://github.com/markxcustard/pandas_filtering_films"
         
-        assert home_page.verify_github_link(expected_github_url)
+        assert home_page.verify_pandas_filtering_films_link(expected_github_url)
 
     def test_resume_download(self, driver):
         home_page = HomePage(driver)
@@ -70,7 +75,7 @@ class TestPortfolio:
             ("Software QA Analyst at Kemper Insurance", "kemper-details", "Actively participated in daily stand-up meetings and produced daily dashboard reports, enhancing project communication and status tracking."),
             ("Software QA Analyst at American Access Casualty Company", "american-access-details", "Led initiatives to enhance unit testing coverage and developed comprehensive test suites, significantly advancing the automation of end-to-end testing."),
             ("Junior Application Developer at American Access Casualty Company", "junior-developer-details", "Prepared detailed documentation for program requirements and contributed to research on emerging software technologies, supporting ongoing development efforts and innovation."),
-            ("Technical Skills", "tech-skills-details", "Pytest, Postman, Testrail, Browserstack, Unit Testing, Integration Testing, Rainforest No Code QA Tool, Test Design, Test Writing, Test Coverage, Code Coverage, Test Planning, Functional Testing, Regression Testing, Exploratory Testing, Smoke Testing, Sanity Testing, Spot Checking, Data Analysis, Root Cause Analysis, Debugging, Salesforce, BigQuery, Selenium.")
+            ("Technical Skills", "tech-skills-details", "Pytest, Postman, Testrail, Browserstack, Unit Testing, Integration Testing, Rainforest No Code QA Tool, Test Design, Test Writing, Test Coverage, Code Coverage, Test Planning, Functional Testing, Regression Testing, Exploratory Testing, Smoke Testing, Sanity Testing, Spot Checking, Data Analysis, Root Cause Analysis, Debugging, Salesforce, BigQuery, Selenium, Gherkin, Cucumber.")
         ]
 
         for item_text, item_id, expected_text in portfolio_items:
