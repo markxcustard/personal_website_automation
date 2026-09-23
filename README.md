@@ -1,108 +1,100 @@
-# Portfolio Website Automated Tests
+# Portfolio Website Automation (Selenium + pytest)
 
-This repository contains the automated tests for Mark Custard's portfolio website. These tests ensure that the website's functionality works as expected.
+End-to-end UI tests for [markcustard.com](https://markcustard.com/) — my portfolio
+site — written with Selenium WebDriver, pytest and the Page Object Model.
 
-## Table of Contents
+140 tests covering navigation, the resume section and its PDF download, the
+Isotope-filtered portfolio grid, technical skills, skill percentages, the
+testimonials carousel, the contact form's validation, and the mobile
+off-canvas sidebar.
 
-- [Description](#description)
-- [Installation](#installation)
-- [Running Tests](#running-tests)
-- [Test Structure](#test-structure)
-- [Contributing](#contributing)
-- [License](#license)
+## Why this suite looks the way it does
 
-## Description
+The site is a single page built on an animated Bootstrap template, which makes a
+few things non-obvious. Each one is handled in the page objects rather than
+sprinkled through the tests:
 
-This project includes automated tests for the portfolio website. The tests are written using Selenium and Pytest and cover various sections of the website, such as "About Me," "Contact," "Portfolio," and "Testimonials."
+| Behaviour | How it's handled |
+| --- | --- |
+| **AOS reveal animations** — elements exist in the DOM but report `is_displayed() == False` and empty `.text` until scrolled to | `BasePage.reveal()` scrolls each match into view and waits for it to render |
+| **`scroll-behavior: smooth`** — a nav click starts an animation that outlives the click, and scrollspy only sets the active menu item once it lands | `BasePage.wait_for_scroll_to_settle()` polls `window.scrollY` until it stops changing |
+| **`text-transform: uppercase`** — `.text` returns `"AUTOMATION"` where the markup says `"Automation"` | `BasePage.text_of()` reads `textContent` instead |
+| **Swiper carousel** — only the active slides are rendered, so off-screen testimonials come back blank | Testimonials are read via `textContent` for all five slides |
+| **ChromeDriver key ordering** — a JS object returned from `execute_script` comes back with its keys alphabetised, silently destroying document order | Anything order-sensitive returns an **array**, not an object |
+| **Isotope filtering** — cards animate in and out | `filter_portfolio()` waits for the grid to settle on the expected count |
 
-## Installation
+## The contact form is never submitted
 
-To set up the project locally, follow these steps:
+The form posts to a live Formspree endpoint, so submitting it with valid data
+would deliver a real email on every run. The validation tests instead ask the
+browser via `checkValidity()`, or submit the form **empty** so browser-side
+validation blocks the request. `test_a_well_formed_entry_satisfies_validation`
+confirms a good entry *would* pass, and stops there.
 
-1. **Clone the repository:**
+## Setup
 
-    ```bash
-    git clone https://github.com/markxcustard/portfolio-website-tests.git
-    cd portfolio-website-tests
-    ```
+```bash
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-2. **Set up a virtual environment:**
+No driver binaries to install: Selenium Manager (built into Selenium 4.6+)
+resolves chromedriver and geckodriver automatically.
 
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
+## Running
 
-3. **Install the dependencies:**
+```bash
+pytest                                   # Chrome, visible
+pytest --headless                        # Chrome, headless
+pytest --headless --browser=firefox      # Firefox
+pytest --headless -m smoke               # 16 checks, ~20s
+pytest --headless -m responsive          # mobile viewport only
+pytest --headless --base-url=http://localhost:8000/
+pytest --headless --html=report.html --self-contained-html
+```
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `--base-url` | `https://markcustard.com/` | Point the suite at a local or staging copy |
+| `--browser` | `chrome` | `chrome`, `firefox` or `safari` |
+| `--headless` | off | Ignored for Safari, which has no headless mode |
 
-## Running Tests
+A full Chrome run takes roughly 90 seconds.
 
-### Setup for Running Tests
+## Layout
 
-1. **Install browser drivers:**
+```
+conftest.py                     CLI options, driver and page fixtures
+page_objects/base_page.py       waits, scroll/reveal helpers, textContent reads
+page_objects/home_page.py       locators and accessors for every section
+tests/test_navigation.py        menu, section headings, scrollspy, footer
+tests/test_hero.py              hero heading and typed role rotation
+tests/test_about.py             headline and the fact list
+tests/test_resume.py            roles, education, PDF download
+tests/test_portfolio.py         cards, tags, repo links, Isotope filters
+tests/test_technical_skills.py  the ten skill groups
+tests/test_skills.py            percentages vs aria-valuenow
+tests/test_testimonials.py      carousel contents and pagination
+tests/test_contact.py           info blocks and form validation
+tests/test_responsive.py        off-canvas sidebar, toggle state, no overflow
+```
 
-    Make sure you have the appropriate browser drivers installed (e.g., ChromeDriver for Google Chrome, GeckoDriver for Firefox).
+### Fixture scope
 
-2. **Run the tests:**
+Read-only assertions share one page load via the session-scoped `site` fixture,
+with each module caching what it scrapes. Anything that clicks, types or resizes
+takes `home` instead, which loads the page fresh. That split cut the full run
+from just over three minutes to about ninety seconds.
 
-    You can run all tests using the following command:
+## CI
 
-    ```bash
-    pytest tests/
-    ```
-
-    To run a specific test class or method, use:
-
-    ```bash
-    pytest tests/test_website.py::TestAboutMe
-    pytest tests/test_website.py::TestAboutMe::test_about_me_paragraph
-    ```
-
-## Test Structure
-
-The tests are organized into different classes based on the sections of the website:
-
-- `TestNavigation`: Tests for navigating between different sections of the website.
-- `TestAboutMe`: Tests for the "About Me" section, including verbiage, GitHub link, and resume download.
-- `TestContact`: Tests for the "Contact" section, including email, phone number, GitHub, and LinkedIn buttons.
-- `TestPortfolio`: Tests for the "Portfolio" section, including expanding portfolio items and verifying their content.
-- `TestTestimonials`: Tests for the "Testimonials" section, including verifying testimonial text.
-
-### Example Tests
-
-#### `TestAboutMe`
-
-- **test_about_me_paragraph:** Verifies specific text in the "About Me" section.
-- **test_github_link:** Checks that the GitHub link redirects to the correct URL.
-- **test_resume_download:** Ensures that the resume can be downloaded.
-
-#### `TestContact`
-
-- **test_contact_details:** Verifies the email, phone number, GitHub, and LinkedIn buttons in the "Contact" section.
-
-#### `TestPortfolio`
-
-- **test_portfolio_expansion:** Tests expanding portfolio items and verifying their content.
-
-#### `TestTestimonials`
-
-- **test_testimonial_paragraph:** Verifies specific text in the "Testimonials" section.
-
-## Contributing
-
-Contributions are welcome! If you would like to contribute to this project, please follow these steps:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/your-feature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Add some feature'`)
-5. Push to the branch (`git push origin feature/your-feature`)
-6. Open a Pull Request
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the suite
+against Chrome and Firefox on every push and pull request, and nightly at 07:00
+UTC — the tests target the deployed site, so a scheduled run catches content
+drift even when this repository hasn't changed. An HTML report is uploaded as an
+artifact for each browser.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)

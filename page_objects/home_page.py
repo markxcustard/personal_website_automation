@@ -1,204 +1,311 @@
-import os
-import glob
+"""Page object for the single-page portfolio at https://markcustard.com/."""
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
-import time
 
-class HomePage:
-    def __init__(self, driver):
-        self.driver = driver
-        self.title = "Mark Custard - Portfolio"
-        self.links = {
-            "about": (By.XPATH, "//a[text()='About']"),
-            "portfolio": (By.XPATH, "//a[text()='Portfolio']"),
-            "projects": (By.XPATH, "//a[text()='Projects']"),
-            "testimonials": (By.XPATH, "//a[text()='Testimonials']"),
-            "contact": (By.XPATH, "//a[text()='Contact']")
-        }
-        self.sections = {
-            "about": (By.ID, "about"),
-            "portfolio": (By.ID, "portfolio"),
-            "projects": (By.ID, "projects"),
-            "testimonials": (By.ID, "testimonials"),
-            "contact": (By.ID, "contact")
-        }
-        self.email_link = (By.XPATH, "//a[contains(@href, 'mailto:')]")
-        self.linkedin_button = (By.XPATH, "//a[contains(@href, 'linkedin.com')]")
-        self.github_button = (By.XPATH, "//a[contains(@href, 'github.com')]")
+from page_objects.base_page import BasePage
 
+
+class HomePage(BasePage):
+    TITLE = "Mark Custard - QA & Automation Engineering Lead"
+
+    # Every section the navigation menu links to, in menu order.
+    SECTIONS = (
+        "hero",
+        "about",
+        "resume",
+        "portfolio",
+        "technical-skills",
+        "skills",
+        "testimonials",
+        "contact",
+    )
+
+    # ------------------------------------------------------------------ header
+    HEADER = (By.ID, "header")
+    SITENAME = (By.CSS_SELECTOR, "#header .sitename")
+    PROFILE_IMAGE = (By.CSS_SELECTOR, "#header .profile-img img")
+    HEADER_TOGGLE = (By.CSS_SELECTOR, ".header-toggle")
+    HEADER_SOCIAL_LINKS = (By.CSS_SELECTOR, "#header .social-links a")
+    NAV = (By.ID, "navmenu")
+    NAV_LINKS = (By.CSS_SELECTOR, "#navmenu ul li a")
+    ACTIVE_NAV_LINK = (By.CSS_SELECTOR, "#navmenu ul li a.active")
+
+    # -------------------------------------------------------------------- hero
+    HERO_HEADING = (By.CSS_SELECTOR, "#hero h2")
+    HERO_TYPED = (By.CSS_SELECTOR, "#hero .typed")
+
+    # ------------------------------------------------------------------- about
+    ABOUT_HEADLINE = (By.CSS_SELECTOR, "#about .content h2")
+    ABOUT_FACTS = (By.CSS_SELECTOR, "#about .content ul li")
+
+    # ------------------------------------------------------------------ resume
+    RESUME_TITLES = (By.CSS_SELECTOR, "#resume .resume-title")
+    RESUME_ITEMS = (By.CSS_SELECTOR, "#resume .resume-item")
+    RESUME_ITEM_HEADINGS = (By.CSS_SELECTOR, "#resume .resume-item h4")
+    RESUME_DOWNLOAD = (By.CSS_SELECTOR, "#resume a.btn-download-resume")
+
+    # --------------------------------------------------------------- portfolio
+    PORTFOLIO_FILTERS = (By.CSS_SELECTOR, "#portfolio .portfolio-filters li")
+    ACTIVE_FILTER = (By.CSS_SELECTOR, "#portfolio .portfolio-filters li.filter-active")
+    PORTFOLIO_ITEMS = (By.CSS_SELECTOR, "#portfolio .portfolio-item")
+    PORTFOLIO_CARDS = (By.CSS_SELECTOR, "#portfolio .portfolio-card")
+    PORTFOLIO_GITHUB_LINKS = (By.CSS_SELECTOR, "#portfolio a.github-link")
+
+    # -------------------------------------------------------- technical skills
+    SERVICE_ITEMS = (By.CSS_SELECTOR, "#technical-skills .service-item")
+
+    # ------------------------------------------------------------------ skills
+    SKILL_ROWS = (By.CSS_SELECTOR, "#skills .progress")
+
+    # ------------------------------------------------------------ testimonials
+    TESTIMONIAL_ITEMS = (By.CSS_SELECTOR, "#testimonials .testimonial-item")
+    TESTIMONIAL_SLIDES = (By.CSS_SELECTOR, "#testimonials .swiper-slide")
+    TESTIMONIAL_BULLETS = (By.CSS_SELECTOR, "#testimonials .swiper-pagination-bullet")
+    ACTIVE_TESTIMONIAL = (
+        By.CSS_SELECTOR,
+        "#testimonials .swiper-slide-active .testimonial-item h3",
+    )
+
+    # ----------------------------------------------------------------- contact
+    CONTACT_INFO_ITEMS = (By.CSS_SELECTOR, "#contact .info-item")
+    CONTACT_FORM = (By.CSS_SELECTOR, "#contact form")
+    FIELD_NAME = (By.ID, "name-field")
+    FIELD_EMAIL = (By.ID, "email-field")
+    FIELD_SUBJECT = (By.ID, "subject-field")
+    FIELD_MESSAGE = (By.ID, "message-field")
+    SUBMIT_BUTTON = (By.CSS_SELECTOR, "#contact form button[type='submit']")
+
+    # ------------------------------------------------------------------ footer
+    FOOTER = (By.ID, "footer")
+
+    # ================================================================ navigation
     def open(self):
-        self.driver.get("https://markxcustard.github.io/")
-        
+        self.driver.get(self.base_url)
+        # The portfolio grid is the last thing Isotope lays out, so its presence
+        # is a reliable signal that the page's JavaScript has run.
+        self.wait_present(self.PORTFOLIO_ITEMS)
+        return self
+
+    def nav_link(self, section):
+        return self.find((By.CSS_SELECTOR, f"#navmenu a[href='#{section}']"))
+
+    def nav_labels(self):
+        return [self.text_of(link) for link in self.reveal(self.NAV_LINKS)]
+
+    def nav_targets(self):
+        return [
+            link.get_attribute("href").split("#")[-1]
+            for link in self.find_all(self.NAV_LINKS)
+        ]
+
     def go_to_section(self, section):
-        link_locator = self.links[section]
-        link = self.wait_for_element_to_be_clickable(link_locator)
-        link.click()
-        print(f"Navigated to {section} section")
-        
-    def verify_section(self, section):
-        section_locator = self.sections[section]
-        return self.wait_for_element_to_be_visible(section_locator).is_displayed()
+        self.js_click(self.nav_link(section))
+        self.wait_visible((By.ID, section))
+        self.wait_for_scroll_to_settle()
+        return self
 
-    def expand_portfolio_item(self, item_text):
-        max_attempts = 3
-        attempts = 0
-        while attempts < max_attempts:
-            try:
-                item_link = self.wait_for_element_to_be_clickable((By.XPATH, f"//a[@class='portfolio-title' and contains(normalize-space(), '{item_text}')]"))
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", item_link)
-                WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(item_link))
-                self.driver.execute_script("arguments[0].click();", item_link)  # Use JavaScript click
-                time.sleep(2)  # Wait for the item to expand
-                print(f"Expanded portfolio item: {item_text}")
-                return
-            except (ElementClickInterceptedException, WebDriverException) as e:
-                print(f"Exception: Could not click on portfolio item: {item_text} due to: {e}. Retrying...")
-                attempts += 1
-                self.driver.execute_script("window.scrollBy(0, -100);")  # Scroll up slightly
-            except TimeoutException as e:
-                print(f"TimeoutException: Could not expand portfolio item: {item_text} due to: {e}")
-                break
+    def active_nav_section(self):
+        link = self.wait_visible(self.ACTIVE_NAV_LINK)
+        return link.get_attribute("href").split("#")[-1]
 
-        if attempts == max_attempts:
-            raise Exception(f"Failed to expand portfolio item: {item_text} after {max_attempts} attempts")
+    def section(self, section):
+        return self.reveal_one((By.ID, section))
 
-    def verify_portfolio_item_expanded(self, item_id, expected_text):
-        try:
-            item_expanded_content = self.wait_for_element_to_be_visible((By.ID, item_id), timeout=60)
-            assert item_expanded_content.is_displayed()
-            actual_text = item_expanded_content.text.strip()
-            expected_text = expected_text.strip()
+    def section_heading(self, section):
+        return self.text_of((By.CSS_SELECTOR, f"#{section} .section-title h2"))
 
-            # Normalize whitespace
-            actual_text = ' '.join(actual_text.split())
-            expected_text = ' '.join(expected_text.split())
+    # ====================================================================== hero
+    def hero_heading(self):
+        return self.text_of(self.reveal_one(self.HERO_HEADING))
 
-            # Split the expected text into phrases and check if each is present in the actual text
-            expected_phrases = expected_text.split(', ')
-            for phrase in expected_phrases:
-                if phrase not in actual_text:
-                    print(f"Missing expected phrase: {phrase}")
-                    return False
+    def hero_typed_items(self):
+        typed = self.wait_present(self.HERO_TYPED)
+        return [
+            item.strip()
+            for item in typed.get_attribute("data-typed-items").split(",")
+        ]
 
-            print(f"Expected text: {expected_text}")
-            print(f"Actual text: {actual_text}")
-            return True
-        except TimeoutException as e:
-            print(f"TimeoutException: Could not verify portfolio item expanded: {item_id} due to: {e}")
-            return False
+    # ===================================================================== about
+    def about_headline(self):
+        return self.text_of(self.reveal_one(self.ABOUT_HEADLINE))
 
-    def verify_about_me_text(self, expected_text):
-        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
-        actual_text = about_me_section.text.strip()
+    def about_facts(self):
+        """The two-column fact list, as ``{"Degree": "Bachelor of Laws (LLB)", ...}``."""
+        return self.driver.execute_script(
+            """
+            const out = {};
+            document.querySelectorAll(arguments[0]).forEach(li => {
+              const label = li.querySelector('strong');
+              const value = li.querySelector('span');
+              if (label && value) {
+                out[label.textContent.trim().replace(/:$/, '')] = value.textContent.trim();
+              }
+            });
+            return out;
+            """,
+            self.ABOUT_FACTS[1],
+        )
 
-        # Normalize whitespace
-        actual_text = ' '.join(actual_text.split())
-        expected_text = ' '.join(expected_text.split())
+    # ==================================================================== resume
+    def resume_titles(self):
+        """Visible column headings; the duplicate right-hand one is aria-hidden."""
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll(arguments[0]))
+              .filter(e => e.getAttribute('aria-hidden') !== 'true')
+              .map(e => e.textContent.trim());
+            """,
+            self.RESUME_TITLES[1],
+        )
 
-        if expected_text in actual_text:
-            print(f"Expected text found in About Me section")
-            return True
-        else:
-            print(f"Expected text not found in About Me section")
-            return False
+    def resume_item_headings(self):
+        return self.texts_of(self.RESUME_ITEM_HEADINGS)
 
-    def verify_personal_website_automation_link(self, expected_url):
-        about_me_section = self.wait_for_element_to_be_visible(self.sections['projects'])
-        github_link = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'github.com/markxcustard/personal_website_automation')]")
-        actual_url = github_link.get_attribute('href')
+    def resume_download_link(self):
+        return self.reveal_one(self.RESUME_DOWNLOAD)
 
-        if actual_url == expected_url:
-            print(f"GitHub link URL is correct: {actual_url}")
-            return True
-        else:
-            print(f"GitHub link URL is incorrect: {actual_url}")
-            return False
-        
-    def verify_pandas_filtering_films_link(self, expected_url):
-            about_me_section = self.wait_for_element_to_be_visible(self.sections['projects'])
-            github_link = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'github.com/markxcustard/pandas_filtering_films')]")
-            actual_url = github_link.get_attribute('href')
+    # ================================================================= portfolio
+    def open_portfolio(self):
+        """Go to the portfolio and let AOS finish revealing the grid."""
+        self.go_to_section("portfolio")
+        self.reveal(self.PORTFOLIO_FILTERS)
+        self.reveal(self.PORTFOLIO_ITEMS)
+        return self
 
-            if actual_url == expected_url:
-                print(f"GitHub link URL is correct: {actual_url}")
-                return True
-            else:
-                print(f"GitHub link URL is incorrect: {actual_url}")
-                return False
-            
-    def verify_resume_download(self, expected_file_name):
-        about_me_section = self.wait_for_element_to_be_visible(self.sections['about'])
-        download_button = about_me_section.find_element(By.XPATH, ".//a[contains(@href, 'img/resume_mark_custard.pdf')]")
-        download_button.click()
-        
-        # Wait for the file to be downloaded
-        time.sleep(5)  # Adjust time if necessary for file download
-        
-        # Check for the presence of any file that starts with the expected file name in the default download directory
-        download_dir = os.path.expanduser('~/Downloads')  # Default download directory for many systems
-        downloaded_files = glob.glob(os.path.join(download_dir, f"{expected_file_name}*"))
-        if downloaded_files:
-            print(f"Resume downloaded successfully to: {downloaded_files[0]}")
-            return True
-        else:
-            print(f"Failed to download resume to: {download_dir}")
-            return False
+    def portfolio_filter_labels(self):
+        return [self.text_of(f) for f in self.reveal(self.PORTFOLIO_FILTERS)]
 
-    def verify_contact_email(self, expected_email):
-        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
-        email_link = contact_section.find_element(By.XPATH, ".//a[contains(@href, 'mailto:')]")
-        actual_email = email_link.get_attribute('href').replace('mailto:', '')
+    def portfolio_cards(self):
+        """Every card's title, tags and GitHub URL, in DOM order."""
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#portfolio .portfolio-item')).map(item => ({
+              title: item.querySelector('.portfolio-card-header h4').textContent.trim(),
+              tags: Array.from(item.querySelectorAll('.portfolio-tags .tag')).map(t => t.textContent.trim()),
+              description: item.querySelector('.portfolio-card-body p').textContent.trim(),
+              url: item.querySelector('a.github-link').href,
+              filter: Array.from(item.classList).find(c => c.startsWith('filter-')),
+            }));
+            """
+        )
 
-        if actual_email == expected_email:
-            print(f"Email link is correct: {actual_email}")
-            return True
-        else:
-            print(f"Email link is incorrect: {actual_email}")
-            return False
+    def visible_portfolio_titles(self):
+        return [
+            self.text_of(card.find_element(By.TAG_NAME, "h4"))
+            for card in self.find_all(self.PORTFOLIO_CARDS)
+            if card.is_displayed()
+        ]
 
-    def verify_contact_phone(self, expected_phone):
-        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
-        phone_element = contact_section.find_element(By.XPATH, ".//p[contains(., 'Phone:')]")
-        actual_phone = phone_element.text.split('Phone:')[1].strip()
+    def filter_portfolio(self, label, expected_count):
+        """Click a filter chip and wait for Isotope to settle on ``expected_count`` cards."""
+        chip = next(
+            f for f in self.reveal(self.PORTFOLIO_FILTERS) if self.text_of(f) == label
+        )
+        self.js_click(chip)
+        self.wait_until(
+            lambda: len(self.visible_portfolio_titles()) == expected_count,
+            message=(
+                f"Filter {label!r} settled on "
+                f"{len(self.visible_portfolio_titles())} cards, expected {expected_count}"
+            ),
+        )
+        return self
 
-        if actual_phone == expected_phone:
-            print(f"Phone number is correct: {actual_phone}")
-            return True
-        else:
-            print(f"Phone number is incorrect: {actual_phone}")
-            return False
+    def active_filter_label(self):
+        return self.text_of(self.find(self.ACTIVE_FILTER))
 
-    def verify_social_button(self, platform, expected_url):
-        contact_section = self.wait_for_element_to_be_visible(self.sections['contact'])
-        button = contact_section.find_element(By.XPATH, f".//a[contains(@href, '{platform}')]")
-        actual_url = button.get_attribute('href')
+    # ======================================================== technical skills
+    def technical_skill_groups(self):
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#technical-skills .service-item')).map(i => ({
+              title: i.querySelector('h4.title').textContent.trim(),
+              description: i.querySelector('p.description').textContent.trim(),
+            }));
+            """
+        )
 
-        if actual_url == expected_url:
-            print(f"{platform.capitalize()} button URL is correct: {actual_url}")
-            return True
-        else:
-            print(f"{platform.capitalize()} button URL is incorrect: {actual_url}")
-            return False
+    # ==================================================================== skills
+    def skills(self):
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#skills .progress')).map(row => ({
+              name: row.querySelector('.skill > span').textContent.trim(),
+              label: row.querySelector('.skill .val').textContent.trim(),
+              value: Number(row.querySelector('.progress-bar').getAttribute('aria-valuenow')),
+            }));
+            """
+        )
 
-    def verify_testimonial_text(self, expected_text):
-        testimonials_section = self.wait_for_element_to_be_visible(self.sections['testimonials'])
-        actual_text = testimonials_section.text.strip()
+    # ============================================================== testimonials
+    def testimonials(self):
+        """All testimonials, read via ``textContent``.
 
-        # Normalize whitespace
-        actual_text = ' '.join(actual_text.split())
-        expected_text = ' '.join(expected_text.split())
+        Swiper only renders the active slides, so anything else would come back
+        blank from ``.text``.
+        """
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#testimonials .testimonial-item')).map(t => ({
+              name: t.querySelector('h3').textContent.trim(),
+              role: t.querySelector('h4').textContent.trim(),
+              linkedin: t.querySelector('h3 a') ? t.querySelector('h3 a').href : null,
+              quote: t.querySelector('p').textContent.trim(),
+            }));
+            """
+        )
 
-        if expected_text in actual_text:
-            print(f"Expected text found in Testimonials section")
-            return True
-        else:
-            print(f"Expected text not found in Testimonials section")
-            return False
+    def active_testimonial_name(self):
+        return self.text_of(self.find(self.ACTIVE_TESTIMONIAL))
 
-    def wait_for_element_to_be_clickable(self, locator, timeout=30):
-        return WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(locator))
+    def show_testimonial(self, index):
+        bullets = self.find_all(self.TESTIMONIAL_BULLETS)
+        current = self.active_testimonial_name()
+        self.js_click(bullets[index])
+        self.wait_until(
+            lambda: self.active_testimonial_name() != current,
+            message="Swiper never advanced to the requested slide",
+        )
+        return self.active_testimonial_name()
 
-    def wait_for_element_to_be_visible(self, locator, timeout=30):
-        return WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(locator))
+    # =================================================================== contact
+    def contact_info(self):
+        """Info blocks in DOM order.
+
+        Returned as a list, not a dict: ChromeDriver serialises JS objects with
+        their keys alphabetised, which silently destroys document order.
+        """
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#contact .info-item')).map(i => ({
+              heading: i.querySelector('h3').textContent.trim(),
+              lines: Array.from(i.querySelectorAll('p')).map(p => p.textContent.trim()),
+            }));
+            """
+        )
+
+    def contact_info_map(self):
+        return {block["heading"]: block["lines"] for block in self.contact_info()}
+
+    def contact_info_headings(self):
+        return [block["heading"] for block in self.contact_info()]
+
+    def contact_form(self):
+        return self.reveal_one(self.CONTACT_FORM)
+
+    def form_action(self):
+        return self.find(self.CONTACT_FORM).get_attribute("action")
+
+    def required_field_names(self):
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#contact form [required]'))
+              .map(f => f.getAttribute('name'));
+            """
+        )
+
+    def form_is_valid(self):
+        """Ask the browser, without posting anything to the form's endpoint."""
+        return self.driver.execute_script(
+            "return document.querySelector('#contact form').checkValidity();"
+        )

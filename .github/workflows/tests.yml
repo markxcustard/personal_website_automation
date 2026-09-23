@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # The suite runs against the deployed site, so a nightly run catches
+    # content drift even when this repository hasn't changed.
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  selenium:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the suite against ${{ matrix.browser }}
+        run: >
+          pytest --headless
+          --browser=${{ matrix.browser }}
+          --html=report.html --self-contained-html
+          -ra
+
+      - name: Upload the HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-${{ matrix.browser }}
+          path: report.html
+          if-no-files-found: ignore
