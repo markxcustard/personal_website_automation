@@ -37,6 +37,18 @@ EXPECTED_CARDS = [
     },
 ]
 
+# The headline number each card advertises.
+METRICS = {
+    "Personal Website Automation": "167 tests",
+    "BDD Personal Website": "89 scenarios",
+    "Cypress Portfolio Tests": "163 tests",
+    "Pandas Filtering Films": "54 tests",
+    "Films CRUD": "60 tests",
+}
+
+# WCAG 2.5.5 (AAA) / 2.5.8 (AA) target sizing.
+MIN_TAP_TARGET = 44
+
 # (filter label, number of cards that should remain visible)
 FILTERS = [("All", 5), ("Automation", 2), ("BDD", 1), ("Data", 1), ("Database", 1)]
 
@@ -155,3 +167,44 @@ class TestAccessibility:
         levels = portfolio.portfolio_heading_levels()
         assert levels[0] == "H2"
         assert set(levels[1:]) == {"H3"}
+
+
+class TestCardLayout:
+    """The redesign: a card is one padded container rather than three banded
+    sections, and it advertises a number instead of an adjective."""
+
+    @pytest.mark.parametrize("title, metric", sorted(METRICS.items()))
+    def test_card_advertises_its_metric(self, portfolio, title, metric):
+        assert portfolio.portfolio_metrics()[title] == metric
+
+    def test_every_card_has_a_metric(self, portfolio):
+        missing = [t for t, m in portfolio.portfolio_metrics().items() if not m]
+        assert not missing, f"cards with no metric badge: {missing}"
+
+    def test_no_description_is_clipped(self, portfolio):
+        """Descriptions are clamped to three lines to keep card heights even, so
+        the copy has to be short enough to fit or it loses its evidence."""
+        assert portfolio.clipped_descriptions() == []
+
+    @pytest.mark.parametrize("title", sorted(METRICS), ids=sorted(METRICS))
+    def test_the_whole_card_is_clickable(self, portfolio, title):
+        """The footer link is stretched over the card, so a click anywhere on it
+        opens the repository rather than only the 'View on GitHub' row."""
+        target = portfolio.card_click_target(title)
+        assert target and target.startswith("https://github.com/markxcustard/"), target
+
+
+class TestTapTargets:
+    """The filters were 14px-tall bare text, well under any usable tap size."""
+
+    def test_every_filter_meets_the_minimum_target_height(self, portfolio):
+        too_small = [
+            c for c in portfolio.filter_chip_boxes() if c["height"] < MIN_TAP_TARGET
+        ]
+        assert not too_small, f"below {MIN_TAP_TARGET}px tall: {too_small}"
+
+    def test_every_filter_meets_the_minimum_target_width(self, portfolio):
+        too_small = [
+            c for c in portfolio.filter_chip_boxes() if c["width"] < MIN_TAP_TARGET
+        ]
+        assert not too_small, f"below {MIN_TAP_TARGET}px wide: {too_small}"

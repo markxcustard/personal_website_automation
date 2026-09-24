@@ -211,6 +211,60 @@ class HomePage(BasePage):
         )
         return self
 
+    def portfolio_metrics(self):
+        """The accent badge on each card, keyed by card title."""
+        return self.driver.execute_script(
+            """
+            const out = {};
+            document.querySelectorAll('#portfolio .portfolio-item').forEach(item => {
+              const title = item.querySelector('.portfolio-card-header h3').textContent.trim();
+              const metric = item.querySelector('.portfolio-metric');
+              out[title] = metric ? metric.textContent.trim() : null;
+            });
+            return out;
+            """
+        )
+
+    def clipped_descriptions(self):
+        """Cards whose description is cut off by the three-line clamp."""
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#portfolio .portfolio-card'))
+              .filter(c => {
+                const p = c.querySelector('.portfolio-card-body p');
+                return p.scrollHeight > p.clientHeight + 1;
+              })
+              .map(c => c.querySelector('h3').textContent.trim());
+            """
+        )
+
+    def filter_chip_boxes(self):
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#portfolio .portfolio-filters li')).map(l => {
+              const r = l.getBoundingClientRect();
+              return {label: l.textContent.trim(), width: Math.round(r.width), height: Math.round(r.height)};
+            });
+            """
+        )
+
+    def card_click_target(self, title):
+        """What a click in the middle of a card would actually hit."""
+        return self.driver.execute_script(
+            """
+            const card = Array.from(document.querySelectorAll('#portfolio .portfolio-card'))
+              .find(c => c.querySelector('h3').textContent.trim() === arguments[0]);
+            if (!card) return null;
+            // elementFromPoint only answers for coordinates inside the viewport.
+            card.scrollIntoView({block: 'center', behavior: 'instant'});
+            const r = card.getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            const link = hit && hit.closest ? hit.closest('a.github-link') : null;
+            return link ? link.href : (hit ? hit.className : null);
+            """,
+            title,
+        )
+
     def portfolio_link_labels(self):
         return self.driver.execute_script(
             "return Array.from(document.querySelectorAll('#portfolio a.github-link'))"
