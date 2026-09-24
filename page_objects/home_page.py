@@ -33,6 +33,7 @@ class HomePage(BasePage):
     # -------------------------------------------------------------------- hero
     HERO_HEADING = (By.CSS_SELECTOR, "#hero h2")
     HERO_TYPED = (By.CSS_SELECTOR, "#hero .typed")
+    HERO_LINE = (By.CSS_SELECTOR, "#hero p")
 
     # ------------------------------------------------------------------- about
     ABOUT_HEADLINE = (By.CSS_SELECTOR, "#about .content h2")
@@ -124,6 +125,21 @@ class HomePage(BasePage):
             item.strip()
             for item in typed.get_attribute("data-typed-items").split(",")
         ]
+
+    def hero_snapshot(self):
+        """The whole hero line and the typed role, read in one go.
+
+        Taken together rather than in two calls, because Typed.js advances
+        between them and the pair has to be consistent to assert on.
+        """
+        return self.driver.execute_script(
+            """
+            return {
+              line: document.querySelector('#hero p').textContent,
+              role: document.querySelector('#hero .typed').textContent,
+            };
+            """
+        )
 
     # ===================================================================== about
     def about_headline(self):
