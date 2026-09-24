@@ -3,10 +3,10 @@
 End-to-end UI tests for [markcustard.com](https://markcustard.com/) — my portfolio
 site — written with Selenium WebDriver, pytest and the Page Object Model.
 
-140 tests covering navigation, the resume section and its PDF download, the
+153 tests covering navigation, the resume section and its PDF download, the
 Isotope-filtered portfolio grid, technical skills, skill percentages, the
-testimonials carousel, the contact form's validation, and the mobile
-off-canvas sidebar.
+testimonials carousel, the contact form's validation, the mobile off-canvas
+sidebar, and the portfolio grid's keyboard accessibility.
 
 ## Why this suite looks the way it does
 
@@ -48,7 +48,7 @@ resolves chromedriver and geckodriver automatically.
 pytest                                   # Chrome, visible
 pytest --headless                        # Chrome, headless
 pytest --headless --browser=firefox      # Firefox
-pytest --headless -m smoke               # 16 checks, ~20s
+pytest --headless -m smoke               # 17 checks, ~23s
 pytest --headless -m responsive          # mobile viewport only
 pytest --headless --base-url=http://localhost:8000/
 pytest --headless --html=report.html --self-contained-html
@@ -72,7 +72,7 @@ tests/test_navigation.py        menu, section headings, scrollspy, footer
 tests/test_hero.py              hero heading and typed role rotation
 tests/test_about.py             headline and the fact list
 tests/test_resume.py            roles, education, PDF download
-tests/test_portfolio.py         cards, tags, repo links, Isotope filters
+tests/test_portfolio.py         cards, tags, repo links, filters, accessibility
 tests/test_technical_skills.py  the ten skill groups
 tests/test_skills.py            percentages vs aria-valuenow
 tests/test_testimonials.py      carousel contents and pagination

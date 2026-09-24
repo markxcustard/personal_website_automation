@@ -180,7 +180,7 @@ class HomePage(BasePage):
         return self.driver.execute_script(
             """
             return Array.from(document.querySelectorAll('#portfolio .portfolio-item')).map(item => ({
-              title: item.querySelector('.portfolio-card-header h4').textContent.trim(),
+              title: item.querySelector('.portfolio-card-header h3').textContent.trim(),
               tags: Array.from(item.querySelectorAll('.portfolio-tags .tag')).map(t => t.textContent.trim()),
               description: item.querySelector('.portfolio-card-body p').textContent.trim(),
               url: item.querySelector('a.github-link').href,
@@ -191,7 +191,7 @@ class HomePage(BasePage):
 
     def visible_portfolio_titles(self):
         return [
-            self.text_of(card.find_element(By.TAG_NAME, "h4"))
+            self.text_of(card.find_element(By.TAG_NAME, "h3"))
             for card in self.find_all(self.PORTFOLIO_CARDS)
             if card.is_displayed()
         ]
@@ -210,6 +210,31 @@ class HomePage(BasePage):
             ),
         )
         return self
+
+    def portfolio_link_labels(self):
+        return self.driver.execute_script(
+            "return Array.from(document.querySelectorAll('#portfolio a.github-link'))"
+            ".map(a => a.getAttribute('aria-label'));"
+        )
+
+    def portfolio_heading_levels(self):
+        return self.driver.execute_script(
+            "return Array.from(document.querySelectorAll('#portfolio h1,#portfolio h2,"
+            "#portfolio h3,#portfolio h4,#portfolio h5,#portfolio h6'))"
+            ".map(h => h.tagName);"
+        )
+
+    def filter_chip_a11y(self):
+        return self.driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#portfolio .portfolio-filters li')).map(l => ({
+              label: l.textContent.trim(),
+              tabindex: l.tabIndex,
+              role: l.getAttribute('role'),
+              pressed: l.getAttribute('aria-pressed'),
+            }));
+            """
+        )
 
     def active_filter_label(self):
         return self.text_of(self.find(self.ACTIVE_FILTER))
