@@ -1,5 +1,7 @@
 """Page object for the single-page portfolio at https://markcustard.com/."""
 
+import time
+
 from selenium.webdriver.common.by import By
 
 from page_objects.base_page import BasePage
@@ -125,6 +127,23 @@ class HomePage(BasePage):
             item.strip()
             for item in typed.get_attribute("data-typed-items").split(",")
         ]
+
+    def sample_typed_text(self, seconds=4.0, interval=0.04):
+        """Every distinct value the typed span passes through, in order.
+
+        Polled rather than observed, so it works on every driver rather than
+        only Chrome via CDP.
+        """
+        seen = []
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            current = self.driver.execute_script(
+                "return document.querySelector('#hero .typed').textContent;"
+            )
+            if not seen or seen[-1] != current:
+                seen.append(current)
+            time.sleep(interval)
+        return seen
 
     def hero_snapshot(self):
         """The whole hero line and the typed role, read in one go.

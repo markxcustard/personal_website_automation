@@ -69,3 +69,34 @@ def test_the_rendered_line_has_no_double_space(site):
 
     assert "  " not in captured["line"], repr(captured["line"])
     assert captured["line"].startswith(f"I'm {captured['role']}")
+
+
+def test_the_hero_types_forward_through_the_ampersand(home):
+    """Regression guard for two defects that made the hero look broken.
+
+    The markup left the first role sitting in the span as a no-JS fallback, so
+    Typed.js treated it as already typed and backspaced the whole phrase before
+    anything was typed — a visitor saw the text deleting itself on arrival.
+
+    Then, in its default ``contentType: 'html'`` mode, Typed.js reads '&' as
+    the start of an HTML entity and skips to the next ';'. "a QA & Automation
+    Lead" has no ';', so everything after "a QA " arrived in a single frame
+    rather than being typed.
+
+    So this asserts the span is seen part-way through the first role at
+    several distinct lengths *beyond* the ampersand.
+    """
+    first_role = EXPECTED_ROLES[0]
+    assert "&" in first_role, "this guard depends on the first role containing '&'"
+    stalled_at = first_role.index("&")
+
+    seen = home.sample_typed_text()
+
+    partials = [
+        text
+        for text in seen
+        if first_role.startswith(text) and stalled_at < len(text) < len(first_role)
+    ]
+    assert len(partials) >= 3, (
+        f"expected the role to be typed past the '&' in steps; saw {seen}"
+    )

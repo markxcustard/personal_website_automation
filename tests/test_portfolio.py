@@ -45,9 +45,9 @@ EXPECTED_CARDS = [
 
 # The headline number each card advertises.
 METRICS = {
-    "Personal Website Automation": "176 tests",
-    "BDD Personal Website": "93 scenarios",
-    "Cypress Portfolio Tests": "172 tests",
+    "Personal Website Automation": "177 tests",
+    "BDD Personal Website": "94 scenarios",
+    "Cypress Portfolio Tests": "177 tests",
     "Flight Delay Notifier": "91 tests",
     "Pandas Filtering Films": "54 tests",
     "Films CRUD": "60 tests",
