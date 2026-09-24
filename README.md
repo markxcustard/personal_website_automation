@@ -3,7 +3,7 @@
 End-to-end UI tests for [markcustard.com](https://markcustard.com/) — my portfolio
 site — written with Selenium WebDriver, pytest and the Page Object Model.
 
-167 tests covering navigation, the resume section and its PDF download, the
+174 tests covering navigation, the resume section and its PDF download, the
 Isotope-filtered portfolio grid, technical skills, skill percentages, the
 testimonials carousel, the contact form's validation, the mobile off-canvas
 sidebar, and the portfolio grid's keyboard accessibility.

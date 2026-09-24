@@ -24,6 +24,12 @@ EXPECTED_CARDS = [
         "url": "https://github.com/markxcustard/cypress_personal_website",
     },
     {
+        "title": "Flight Delay Notifier",
+        "filter": "filter-unit",
+        "tags": ["pytest", "Mocking", "Fixtures"],
+        "url": "https://github.com/markxcustard/flight_delay_notifier",
+    },
+    {
         "title": "Pandas Filtering Films",
         "filter": "filter-data",
         "tags": ["Python", "Pandas", "pytest"],
@@ -39,9 +45,10 @@ EXPECTED_CARDS = [
 
 # The headline number each card advertises.
 METRICS = {
-    "Personal Website Automation": "167 tests",
-    "BDD Personal Website": "89 scenarios",
-    "Cypress Portfolio Tests": "163 tests",
+    "Personal Website Automation": "174 tests",
+    "BDD Personal Website": "91 scenarios",
+    "Cypress Portfolio Tests": "170 tests",
+    "Flight Delay Notifier": "91 tests",
     "Pandas Filtering Films": "54 tests",
     "Films CRUD": "60 tests",
 }
@@ -50,7 +57,14 @@ METRICS = {
 MIN_TAP_TARGET = 44
 
 # (filter label, number of cards that should remain visible)
-FILTERS = [("All", 5), ("Automation", 2), ("BDD", 1), ("Data", 1), ("Database", 1)]
+FILTERS = [
+    ("All", 6),
+    ("Automation", 2),
+    ("BDD", 1),
+    ("Unit", 1),
+    ("Data", 1),
+    ("Database", 1),
+]
 
 
 @pytest.fixture
@@ -110,6 +124,7 @@ def test_filter_narrows_the_grid(portfolio, label, visible):
     [
         ("Automation", ["Personal Website Automation", "Cypress Portfolio Tests"]),
         ("BDD", ["BDD Personal Website"]),
+        ("Unit", ["Flight Delay Notifier"]),
         ("Data", ["Pandas Filtering Films"]),
         ("Database", ["Films CRUD"]),
     ],
@@ -141,7 +156,7 @@ class TestAccessibility:
 
     def test_only_the_active_filter_is_pressed(self, portfolio):
         chips = portfolio.filter_chip_a11y()
-        assert [c["pressed"] for c in chips] == ["true", "false", "false", "false", "false"]
+        assert [c["pressed"] for c in chips] == ["true"] + ["false"] * (len(FILTERS) - 1)
 
     def test_activating_a_filter_moves_aria_pressed(self, portfolio):
         portfolio.filter_portfolio("BDD", 1)
