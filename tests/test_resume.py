@@ -4,10 +4,10 @@ import os
 
 import pytest
 
-EXPECTED_COLUMN_TITLES = ["Summary", "Education", "Professional Experience"]
+EXPECTED_COLUMN_TITLES = ["Summary", "Education", "Professional Experience", "Projects"]
 
 EXPECTED_ROLES = [
-    "Lead Engineer, Full Stack & Quality",
+    "Full Stack Developer",
     "QA Analyst — Manual | Automation",
     "Senior QA Engineer",
     "QA Analyst",
@@ -21,7 +21,9 @@ EXPECTED_EDUCATION = [
     "Bachelor of Laws (LLB) in Business Law",
 ]
 
-CURRENT_RESUME_PDF = "mark_custard_resume_09_2026.pdf"
+CURRENT_RESUME_PDF = "mark_custard_sdet_resume_10_2026.pdf"
+
+EXPECTED_PROJECTS = ["AI-Directed DJ Mixing System"]
 
 
 @pytest.fixture(scope="module")
@@ -75,3 +77,14 @@ def test_clicking_download_saves_the_pdf(home, download_dir, browser_name):
     saved = [n for n in os.listdir(download_dir) if n.endswith(".pdf")]
     assert saved, "resume PDF was not written to disk"
     assert os.path.getsize(os.path.join(download_dir, saved[0])) > 0
+
+
+@pytest.mark.parametrize("project", EXPECTED_PROJECTS)
+def test_project_is_listed(resume, project):
+    """Personal projects sit alongside the employment history, under their own
+    column heading."""
+    assert project in resume["headings"]
+
+
+def test_projects_has_its_own_column_heading(resume):
+    assert "Projects" in resume["titles"]
